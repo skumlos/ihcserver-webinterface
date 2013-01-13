@@ -13,9 +13,6 @@
 		echo "socket_connect() failed.\nReason: ($result) " . socket_strerror(socket_last_error($socket)) . "\n";
 	}
 
-	$req = $_REQUEST['action'];
-	sscanf($req,"%s %d",$cmd,$no);
-
 	class IHCRequest {
 		public $type;
 		public $moduleNumber;
@@ -23,19 +20,31 @@
 	}
 
 	$serverreq = new IHCRequest();
+	$serverreq->type = $_REQUEST['action'];
 
-	switch($cmd) {
-		case "inputModule":
-			$serverreq->type = "toggleInputModule";
-			$serverreq->moduleNumber = $no;
-			$serverreq->ioNumber = 0;
-//		echo "inputModule|$no|off";
+	$responseRequired = true;
+
+	switch($serverreq->type) {
+		case "toggleOutput":
+			$serverreq->moduleNumber = intval($_REQUEST['moduleNumber']);
+			$serverreq->ioNumber = intval($_REQUEST['outputNumber']);
 		break;
-		case "outputModule":
-			$serverreq->type = "toggleOutputModule";
-			$serverreq->moduleNumber = $no;
+		case "toggleInputModule":
+			$serverreq->moduleNumber = intval($_REQUEST['moduleNumber']);
 			$serverreq->ioNumber = 0;
-//		echo "outputModule|$no|off";
+		break;
+		case "toggleOutputModule":
+			$serverreq->moduleNumber = intval($_REQUEST['moduleNumber']);
+			$serverreq->ioNumber = 0;
+		break;
+		case "getAll":
+			$serverreq->moduleNumber = 0;
+			$serverreq->ioNumber = 0;
+		break;
+		case "saveConfiguration":
+			$responseRequired = false;
+			$serverreq->moduleNumber = 0;
+			$serverreq->ioNumber = 0;
 		break;
 		default:
 			echo "Unknown request";
@@ -52,31 +61,29 @@
 	$recvd = socket_recv($socket,$buf,3,MSG_WAITALL);
 
 	if ($buf == 'ACK') {
-		$header = '';
-		socket_recv($socket,$header,4,MSG_WAITALL);
-		$toReceive = unpack("L",$header);
-		$msg = "";
-		socket_recv($socket,$msg,$toReceive[1],MSG_WAITALL);
-		$jsonResponse = json_decode($msg);
-		if($jsonResponse != null) {
-			$type = $jsonResponse->{"type"};
-			switch($type) {
-				case "outputModuleState":
-					$modNo = $jsonResponse->{"moduleNumber"};
-					$state = $jsonResponse->{"state"} ? "on" : "off";
-					echo "outputModule|".$modNo."|".$state;
-				break;
-				case "inputModuleState":
-					$modNo = $jsonResponse->{"moduleNumber"};
-					$state = $jsonResponse->{"state"} ? "on" : "off";
-					echo "inputModule|".$modNo."|".$state;
-				break;
-				default:
-					echo "Unknown response";
-				break;
+		if(responseRequired) {
+			$header = '';
+			socket_recv($socket,$header,4,MSG_WAITALL);
+			$toReceive = unpack("L",$header);
+			$msg = "";
+			socket_recv($socket,$msg,$toReceive[1],MSG_WAITALL);
+			$jsonResponse = json_decode($msg);
+			if($jsonResponse != null) {
+				$type = $jsonResponse->{"type"};
+				switch($type) {
+					case "outputState":
+					case "outputModuleState":
+					case "inputModuleState":
+					case "allModules":
+						echo $msg;
+					break;
+					default:
+						echo "Unknown response";
+					break;
+				}
+			} else {
+				echo "Response was null";
 			}
-		} else {
-			echo "Response was null";
 		}
 	} else if ($buf == 'NAK') {
 		echo "NAK";

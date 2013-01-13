@@ -1,4 +1,10 @@
 <html>
+<?php
+	$version = "0.1";
+	$author = "Martin Hejnfelt";
+	$email = "martin@hejnfelt.com";
+	$year = "2013";
+?>
 <script>
 
 function createRequestObject() {
@@ -14,34 +20,49 @@ function createRequestObject() {
 
 var http = createRequestObject();
 
-function toggleIO(action) {
-	http.open('get', 'IHCConnection.php?action='+action);
-	http.onreadystatechange = handleResponse;
-	http.send(null);
+function toggleOutput(moduleNumber,outputNumber) {
+	http.open('get', 'IHCConnection.php?action=toggleOutput&moduleNumber='+moduleNumber+'&outputNumber='+outputNumber);
+        http.onreadystatechange = handleResponse;
+        http.send(null);
+}
+
+function getAll() {
+        http.open('get', 'IHCConnection.php?action=getAll');
+        http.onreadystatechange = handleResponse;
+        http.send(null);
 }
 
 function handleResponse() {
 	if(http.readyState == 4){
-		var response = http.responseText;
-		var update = new Array();
-//		document.write("response: " + response + ".");
-		if(response.indexOf('|' != -1)) {
-			update = response.split('|');
-			var idvar = update[0]+' '+update[1];
-			if(update[0] == "outputModule") {
-				if(update[2] == "off") {
-					document.getElementById(update[0]+" "+update[1]).innerHTML='<img src=\"ihcoutput230_off.png\"><br>IHC Output '+update[1];
-				} else if(update[2] == "on") {
-					document.getElementById(update[0]+" "+update[1]).innerHTML='<img src=\"ihcoutput230.png\"><br>IHC Output '+update[1];
+		var response = JSON.parse(http.responseText);
+		if(response.type == "allModules") {
+			var ioParagraph = "";
+			for(var i = 0; i < response.modules.outputModules.length; i++) {
+				if(response.modules.outputModules[i].state) {
+					ioParagraph += ("<h3>Output module "+response.modules.outputModules[i].moduleNumber+"</h3>");
+					for(var j=0; j < response.modules.outputModules[i].outputStates.length; j++) {
+						var moduleNumber = response.modules.outputModules[i].moduleNumber;
+						var outputNumber = response.modules.outputModules[i].outputStates[j].outputNumber;
+						ioParagraph += ("<button id=output."+moduleNumber+"."+outputNumber+" onclick=toggleOutput("+moduleNumber+","+outputNumber+")>Output "+moduleNumber+"."+outputNumber+"</button>");
+					}
+					ioParagraph += ("<br><br>");
 				}
 			}
-			if(update[0] == "inputModule") {
-				if(update[2] == "off") {
-					document.getElementById(update[0]+' '+update[1]).innerHTML='<img src=\"ihcinput24_off.png\"><br>IHC Input '+update[1];
-				} else if(update[2] == "on") {
-					document.getElementById(update[0]+' '+update[1]).innerHTML='<img src=\"ihcinput24.png\"><br>IHC Input '+update[1];
+			for(var i = 0; i < response.modules.inputModules.length; i++) {
+				if(response.modules.inputModules[i].state) {
+					ioParagraph += ("<h3>Input module "+response.modules.inputModules[i].moduleNumber+"</h3>");
+					for(var j=0; j < response.modules.inputModules[i].inputStates.length; j++) {
+						if(j%8 == 0) {
+							ioParagraph += ("<br>");
+						}
+						var moduleNumber = response.modules.inputModules[i].moduleNumber;
+						var inputNumber = response.modules.inputModules[i].inputStates[j].inputNumber;
+						ioParagraph += ("<button id=input."+moduleNumber+"."+inputNumber+">Input "+moduleNumber+"."+inputNumber+"</button>");
+					}
+					ioParagraph += ("<br><br>");
 				}
 			}
+			document.getElementById("ioOverview").innerHTML = ioParagraph;
 		}
 	}
 }
@@ -49,24 +70,16 @@ function handleResponse() {
 </script>
 
 <body>
+<h1>IHC control v0.1 <input type=button onClick="location.href='configuration.php'" value='Configuration'></h1>
+<p id=ioOverview></p>
+
+<script>
+getAll();
+</script>
 <?php
-	echo "<h3>IHC Output modules</h3>";
-	echo "Select and deselect which modules are present in the system<br>";
-	for($cnt = 1; $cnt <=16; $cnt++) {
-		echo "<button id=\"outputModule $cnt\" type=\"button\" onclick=\"toggleIO(this.id)\">
-		<img src=\"ihcoutput230.png\" alt=\"IHC Output $cnt\" />
-		<br/>IHC Output $cnt</button>";
-		if($cnt == 8) {
-			echo "<br>";
-		}
-	}
-	echo "<h3>IHC Input modules</h3>";
-	echo "Select and deselect which modules are present in the system<br>";
-	for($cnt = 1; $cnt <=8; $cnt++) {
-		echo "<button id=\"inputModule $cnt\" type=\"button\" onclick=\"toggleIO(this.id)\">
-		<img src=\"ihcinput24.png\" alt=\"IHC Input $cnt\" />
-		<br/>IHC Input $cnt</button>";
-	}
+echo "IHCServer webinterface v$version";
+echo "<br>";
+echo "(C) $year by $author ($email)";
 ?>
 </body>
 </html>
