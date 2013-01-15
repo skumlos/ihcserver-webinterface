@@ -1,7 +1,7 @@
 <?php
 	$service_port = 45200;
-//	$address = '127.0.0.1';
-	$address = '192.168.1.149';
+	$address = '127.0.0.1';
+//	$address = '192.168.1.149';
 
 	$socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
 	if ($socket === false) {
@@ -88,6 +88,6 @@
 	} else if ($buf == 'NAK') {
 		echo "NAK";
 	}
-
+	socket_shutdown($socket,2);
 	socket_close($socket);
 ?>

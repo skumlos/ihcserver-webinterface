@@ -18,23 +18,48 @@ function createRequestObject() {
 	return ro;
 }
 
-var http = createRequestObject();
+var ihcrequests = createRequestObject();
+var eventrequest = createRequestObject();
+
+function startEventListener() {
+	eventrequest = createRequestObject();
+        eventrequest.open('get', 'IHCEventListener.php');
+        eventrequest.onreadystatechange = updateIOs;
+        eventrequest.send(null);
+}
+
+function updateIOs() {
+        if(eventrequest.readyState == 4){
+                var response = JSON.parse(eventrequest.responseText);
+		if(response.type == "outputState") {
+			var moduleID = "output."+response.moduleNumber+"."+response.ioNumber;
+			var color = (response.state ? "lightgreen" : "lightgray");
+			document.getElementById(moduleID).style.background = color;
+		} else if(response.type == "inputState") {
+			var moduleID = "input."+response.moduleNumber+"."+response.ioNumber;
+			var color = (response.state ? "lightgreen" : "lightgray");
+			document.getElementById(moduleID).style.background = color;
+		}
+		startEventListener();
+	}
+}
 
 function toggleOutput(moduleNumber,outputNumber) {
-	http.open('get', 'IHCConnection.php?action=toggleOutput&moduleNumber='+moduleNumber+'&outputNumber='+outputNumber);
-        http.onreadystatechange = handleResponse;
-        http.send(null);
+	ihcrequests.open('get', 'IHCConnection.php?action=toggleOutput&moduleNumber='+moduleNumber+'&outputNumber='+outputNumber);
+        ihcrequests.onreadystatechange = handleResponse;
+        ihcrequests.send(null);
 }
 
 function getAll() {
-        http.open('get', 'IHCConnection.php?action=getAll');
-        http.onreadystatechange = handleResponse;
-        http.send(null);
+	ihcrequests = createRequestObject();
+        ihcrequests.open('get', 'IHCConnection.php?action=getAll');
+        ihcrequests.onreadystatechange = handleResponse;
+        ihcrequests.send(null);
 }
 
 function handleResponse() {
-	if(http.readyState == 4){
-		var response = JSON.parse(http.responseText);
+	if(ihcrequests.readyState == 4){
+		var response = JSON.parse(ihcrequests.responseText);
 		if(response.type == "allModules") {
 			var ioParagraph = "";
 			for(var i = 0; i < response.modules.outputModules.length; i++) {
@@ -43,7 +68,8 @@ function handleResponse() {
 					for(var j=0; j < response.modules.outputModules[i].outputStates.length; j++) {
 						var moduleNumber = response.modules.outputModules[i].moduleNumber;
 						var outputNumber = response.modules.outputModules[i].outputStates[j].outputNumber;
-						ioParagraph += ("<button id=output."+moduleNumber+"."+outputNumber+" onclick=toggleOutput("+moduleNumber+","+outputNumber+")>Output "+moduleNumber+"."+outputNumber+"</button>");
+						var outputState = response.modules.outputModules[i].outputStates[j].outputState;
+						ioParagraph += ("<button style=\"background-color:"+(outputState?"lightgreen":"lightgrey")+"\; height:30px\; width:100px\;\" id=\"output."+moduleNumber+"."+outputNumber+"\" onclick=toggleOutput("+moduleNumber+","+outputNumber+")>Output "+moduleNumber+"."+outputNumber+"</button> ");
 					}
 					ioParagraph += ("<br><br>");
 				}
@@ -52,12 +78,13 @@ function handleResponse() {
 				if(response.modules.inputModules[i].state) {
 					ioParagraph += ("<h3>Input module "+response.modules.inputModules[i].moduleNumber+"</h3>");
 					for(var j=0; j < response.modules.inputModules[i].inputStates.length; j++) {
-						if(j%8 == 0) {
-							ioParagraph += ("<br>");
+						if(j == 8) {
+							ioParagraph += ("<br><br>");
 						}
 						var moduleNumber = response.modules.inputModules[i].moduleNumber;
 						var inputNumber = response.modules.inputModules[i].inputStates[j].inputNumber;
-						ioParagraph += ("<button id=input."+moduleNumber+"."+inputNumber+">Input "+moduleNumber+"."+inputNumber+"</button>");
+						var inputState = response.modules.inputModules[i].inputStates[j].inputState;
+						ioParagraph += ("<button style=\"background-color:"+(inputState?"lightgreen":"lightgrey")+"\; height:30px\; width:100px\;\" id=\"input."+moduleNumber+"."+inputNumber+"\">Input "+moduleNumber+"."+inputNumber+"</button> ");
 					}
 					ioParagraph += ("<br><br>");
 				}
@@ -70,16 +97,21 @@ function handleResponse() {
 </script>
 
 <body>
-<h1>IHC control v0.1 <input type=button onClick="location.href='configuration.php'" value='Configuration'></h1>
+<?php
+echo "<h1>IHCServer Webinterface v$version</h1>";
+?>
+<input type=button onClick="location.href='configuration.php'" value='Configuration'>
 <p id=ioOverview></p>
 
 <script>
 getAll();
+startEventListener();
 </script>
 <?php
-echo "IHCServer webinterface v$version";
+echo "IHCServer Webinterface v$version";
 echo "<br>";
 echo "(C) $year by $author ($email)";
+echo "<br>IHC and IHC modules are properties of LK A/S<br>";
 ?>
 </body>
 </html>
