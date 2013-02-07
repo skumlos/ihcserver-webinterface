@@ -13,16 +13,26 @@
 		echo "socket_connect() failed.\nReason: ($result) " . socket_strerror(socket_last_error($socket)) . "\n";
 	}
 
+	$jsonString = "";
+
+	$responseRequired = true;
+
 	class IHCRequest {
 		public $type;
+		public $moduleType;
 		public $moduleNumber;
 		public $ioNumber;
+		public $data;
 	}
+
+	if($_REQUEST['action'] === "moduleConfiguration") {
+	        $body = file_get_contents('php://input');
+		$jsonString = $body;
+		$responseRequired = false;
+	} else {
 
 	$serverreq = new IHCRequest();
 	$serverreq->type = $_REQUEST['action'];
-
-	$responseRequired = true;
 
 	switch($serverreq->type) {
 		case "toggleOutput":
@@ -34,6 +44,19 @@
 			$serverreq->ioNumber = 0;
 		break;
 		case "toggleOutputModule":
+			$serverreq->moduleNumber = intval($_REQUEST['moduleNumber']);
+			$serverreq->ioNumber = 0;
+		break;
+		case "getModuleConfiguration":
+			$serverreq->moduleNumber = intval($_REQUEST['moduleNumber']);
+			$serverreq->moduleType = $_REQUEST['moduleType'];
+			$serverreq->ioNumber = 0;
+		break;
+		case "getOutputModuleState":
+			$serverreq->moduleNumber = intval($_REQUEST['moduleNumber']);
+			$serverreq->ioNumber = 0;
+		break;
+		case "getInputModuleState":
 			$serverreq->moduleNumber = intval($_REQUEST['moduleNumber']);
 			$serverreq->ioNumber = 0;
 		break;
@@ -50,10 +73,9 @@
 			echo "Unknown request";
 		break;
 	}
-
 	$jsonString = json_encode($serverreq);
-
-	socket_write($socket,pack("L",strlen($jsonString)),4);
+}
+	$bytesWritten = socket_write($socket,pack("N",strlen($jsonString)),4);
 	socket_write($socket,$jsonString,strlen($jsonString));
 
 	$buf = "";
@@ -61,7 +83,7 @@
 	$recvd = socket_recv($socket,$buf,3,MSG_WAITALL);
 
 	if ($buf == 'ACK') {
-		if(responseRequired) {
+		if($responseRequired) {
 			$header = '';
 			socket_recv($socket,$header,4,MSG_WAITALL);
 			$toReceive = unpack("L",$header);
@@ -72,6 +94,7 @@
 				$type = $jsonResponse->{"type"};
 				switch($type) {
 					case "outputState":
+					case "moduleConfiguration";
 					case "outputModuleState":
 					case "inputModuleState":
 					case "allModules":
