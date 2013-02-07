@@ -42,6 +42,8 @@ function handleResponse() {
 	if(http.readyState == 4){
 //		document.write(http.responseText);
 		var response = JSON.parse(http.responseText);
+		http = null;
+		delete http;
 		if(response.type == "allModules") {
 			for(var i = 0; i < response.modules.outputModules.length; i++) {
 				var state = response.modules.outputModules[i].state;
@@ -72,10 +74,10 @@ function handleResponse() {
 <body>
 <h2>Configuration <input type=button onclick="location.href='index.php'" value='Back'><input type=button onclick=saveConfiguration() value='Save'></h2>
 <?php
+	echo "Select a I/O module to configure it.<br>";
 	echo "<h3>IHC Output modules</h3>";
-	echo "Select and deselect which modules are present in the system<br>";
 	for($cnt = 1; $cnt <=16; $cnt++) {
-		echo "<button id=\"outputModule$cnt\" type=\"button\" onclick=\"toggleOutputModule($cnt)\">
+		echo "<button id=\"outputModule$cnt\" type=\"button\" onclick=\"location.href='IHCModuleConfiguration.php?moduleType=output&moduleNumber=$cnt'\">
 		<img src=\"ihcoutput230.png\" alt=\"IHC Output Module $cnt\" />
 		<br/>IHC Output<br>Module $cnt</button>";
 		if($cnt == 8) {
@@ -83,9 +85,8 @@ function handleResponse() {
 		}
 	}
 	echo "<h3>IHC Input modules</h3>";
-	echo "Select and deselect which modules are present in the system<br>";
 	for($cnt = 1; $cnt <=8; $cnt++) {
-		echo "<button id=\"inputModule$cnt\" type=\"button\" onclick=\"toggleInputModule($cnt)\">
+		echo "<button id=\"inputModule$cnt\" type=\"button\" onclick=\"location.href='IHCModuleConfiguration.php?moduleType=input&moduleNumber=$cnt'\">
 		<img src=\"ihcinput24.png\" alt=\"IHC Input Module $cnt\" />
 		<br/>IHC Input<br>Module $cnt</button>";
 	}
