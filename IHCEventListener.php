@@ -11,6 +11,8 @@
 	if ($result === false) {
 		echo "socket_connect() failed.\nReason: ($result) " . socket_strerror(socket_last_error($socket)) . "\n";
 	}
+	$id = $_REQUEST['id'];
+	socket_send($socket,$id,strlen($id),0);
 
 	socket_recv($socket,$header,4,MSG_WAITALL);
 
