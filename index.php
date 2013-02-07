@@ -1,9 +1,13 @@
 <html>
+<head>
 <?php
-	$version = "0.1";
+	$version = "0.2";
 	$author = "Martin Hejnfelt";
 	$email = "martin@hejnfelt.com";
 	$year = "2013";
+
+	$id = md5(date("dmY G:i:s",time()+rand(1,10000)));
+        echo "<script>var sessionid=\"$id\";</script>";
 ?>
 <script>
 
@@ -23,14 +27,17 @@ var eventrequest = createRequestObject();
 
 function startEventListener() {
 	eventrequest = createRequestObject();
-        eventrequest.open('get', 'IHCEventListener.php');
+        eventrequest.open('get', 'IHCEventListener.php?id='+sessionid);
         eventrequest.onreadystatechange = updateIOs;
         eventrequest.send(null);
 }
 
 function updateIOs() {
-        if(eventrequest.readyState == 4){
+        if(eventrequest.readyState == 4) {
                 var response = JSON.parse(eventrequest.responseText);
+		eventrequest = null;
+		delete eventrequest;
+		startEventListener();
 		if(response.type == "outputState") {
 			var moduleID = "output."+response.moduleNumber+"."+response.ioNumber;
 			var color = (response.state ? "lightgreen" : "lightgray");
@@ -40,7 +47,10 @@ function updateIOs() {
 			var color = (response.state ? "lightgreen" : "lightgray");
 			document.getElementById(moduleID).style.background = color;
 		}
-		startEventListener();
+	} else if(eventrequest.readyState == 4 && eventrequest.status != 200) {
+		eventrequest = null;
+		delete eventrequest;
+		alert("Event request did not succeed!");
 	}
 }
 
@@ -69,7 +79,9 @@ function handleResponse() {
 						var moduleNumber = response.modules.outputModules[i].moduleNumber;
 						var outputNumber = response.modules.outputModules[i].outputStates[j].outputNumber;
 						var outputState = response.modules.outputModules[i].outputStates[j].outputState;
-						ioParagraph += ("<button style=\"background-color:"+(outputState?"lightgreen":"lightgrey")+"\; height:30px\; width:100px\;\" id=\"output."+moduleNumber+"."+outputNumber+"\" onclick=toggleOutput("+moduleNumber+","+outputNumber+")>Output "+moduleNumber+"."+outputNumber+"</button> ");
+						var outputDescription = response.modules.outputModules[i].outputStates[j].description;
+						if(outputDescription == "") { outputDescription = "Output "+moduleNumber+"."+outputNumber; };
+						ioParagraph += ("<button style=\"background-color:"+(outputState?"lightgreen":"lightgrey")+"\; height:60px\; width:100px\; white-space:normal\; vertical-align:middle\;\" id=\"output."+moduleNumber+"."+outputNumber+"\" onclick=toggleOutput("+moduleNumber+","+outputNumber+")>"+outputDescription+"</button> ");
 					}
 					ioParagraph += ("<br><br>");
 				}
@@ -84,7 +96,9 @@ function handleResponse() {
 						var moduleNumber = response.modules.inputModules[i].moduleNumber;
 						var inputNumber = response.modules.inputModules[i].inputStates[j].inputNumber;
 						var inputState = response.modules.inputModules[i].inputStates[j].inputState;
-						ioParagraph += ("<button style=\"background-color:"+(inputState?"lightgreen":"lightgrey")+"\; height:30px\; width:100px\;\" id=\"input."+moduleNumber+"."+inputNumber+"\">Input "+moduleNumber+"."+inputNumber+"</button> ");
+						var inputDescription = response.modules.inputModules[i].inputStates[j].description;
+						if(inputDescription == "") { inputDescription = "Input "+moduleNumber+"."+inputNumber; };
+						ioParagraph += ("<button style=\"background-color:"+(inputState?"lightgreen":"lightgrey")+"\; height:60px\; width:100px\; white-space:normal\; vertical-align:middle\;\" id=\"input."+moduleNumber+"."+inputNumber+"\">"+inputDescription+"</button> ");
 					}
 					ioParagraph += ("<br><br>");
 				}
@@ -95,7 +109,7 @@ function handleResponse() {
 }
 
 </script>
-
+</head>
 <body>
 <?php
 echo "<h1>IHCServer Webinterface v$version</h1>";
