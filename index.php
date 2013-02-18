@@ -81,7 +81,8 @@ function handleResponse() {
 						var outputState = response.modules.outputModules[i].outputStates[j].outputState;
 						var outputDescription = response.modules.outputModules[i].outputStates[j].description;
 						if(outputDescription == "") { outputDescription = "Output "+moduleNumber+"."+outputNumber; };
-						ioParagraph += ("<button style=\"background-color:"+(outputState?"lightgreen":"lightgrey")+"\; height:60px\; width:100px\; white-space:normal\; vertical-align:middle\;\" id=\"output."+moduleNumber+"."+outputNumber+"\" onclick=toggleOutput("+moduleNumber+","+outputNumber+")>"+outputDescription+"</button> ");
+//						ioParagraph += ("<button style=\"background-color:"+(outputState?"lightgreen":"lightgrey")+"\; height:60px\; width:100px\; white-space:normal\; vertical-align:middle\;\" id=\"output."+moduleNumber+"."+outputNumber+"\" onclick=toggleOutput("+moduleNumber+","+outputNumber+")>"+outputDescription+"</button> ");
+						ioParagraph += ("<input type=\"button\" style=\"background-color:"+(outputState?"lightgreen":"lightgrey")+"\; height:60px\; width:100px\; white-space:normal\; word-wrap:break-word\; vertical-align:middle\;\" id=\"output."+moduleNumber+"."+outputNumber+"\" value=\""+outputDescription+"\" onclick=toggleOutput("+moduleNumber+","+outputNumber+")> ");
 					}
 					ioParagraph += ("<br><br>");
 				}
@@ -98,7 +99,7 @@ function handleResponse() {
 						var inputState = response.modules.inputModules[i].inputStates[j].inputState;
 						var inputDescription = response.modules.inputModules[i].inputStates[j].description;
 						if(inputDescription == "") { inputDescription = "Input "+moduleNumber+"."+inputNumber; };
-						ioParagraph += ("<button style=\"background-color:"+(inputState?"lightgreen":"lightgrey")+"\; height:60px\; width:100px\; white-space:normal\; vertical-align:middle\;\" id=\"input."+moduleNumber+"."+inputNumber+"\">"+inputDescription+"</button> ");
+						ioParagraph += ("<input type=\"button\" style=\"background-color:"+(inputState?"lightgreen":"lightgrey")+"\; height:60px\; width:100px\; white-space:normal\; word-wrap:break-word\; vertical-align:middle\;\" id=\"input."+moduleNumber+"."+inputNumber+"\" value=\""+inputDescription+"\"> ");
 					}
 					ioParagraph += ("<br><br>");
 				}
