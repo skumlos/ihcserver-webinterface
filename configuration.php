@@ -1,4 +1,13 @@
 <html>
+<?php
+	$id = $_REQUEST['id'];
+	if($id == "" || $id == null) {
+		echo "No session id given!";
+		return;
+	}
+	echo "<script>var sessionid=\"$id\";</script>";
+?>
+
 <script>
 
 function createRequestObject() {
@@ -14,33 +23,14 @@ function createRequestObject() {
 
 var http = createRequestObject();
 
-function saveConfiguration() {
-	http.open('get', 'IHCConnection.php?action=saveConfiguration');
-	http.onreadystatechange = handleResponse;
-	http.send(null);
-}
-
-function toggleOutputModule(id) {
-	http.open('get', 'IHCConnection.php?action=toggleOutputModule&moduleNumber='+id);
-	http.onreadystatechange = handleResponse;
-	http.send(null);
-}
-
-function toggleInputModule(id) {
-	http.open('get', 'IHCConnection.php?action=toggleInputModule&moduleNumber='+id);
-	http.onreadystatechange = handleResponse;
-	http.send(null);
-}
-
 function getAll() {
-	http.open('get', 'IHCConnection.php?action=getAll');
+	http.open('get', 'IHCConnection.php?id='+sessionid+'&action=getAll');
 	http.onreadystatechange = handleResponse;
 	http.send(null);
 }
 
 function handleResponse() {
 	if(http.readyState == 4){
-//		document.write(http.responseText);
 		var response = JSON.parse(http.responseText);
 		http = null;
 		delete http;
@@ -57,14 +47,6 @@ function handleResponse() {
 				var imgsrc = (state ? "ihcinput24.png" : "ihcinput24_off.png");
 				document.getElementById(moduleID).innerHTML='<img src=\"'+imgsrc+'\"><br>IHC Input<br>Module '+response.modules.inputModules[i].moduleNumber;
 			}
-		} else if(response.type == "outputModuleState") {
-			var moduleID = "outputModule"+response.moduleNumber;
-			var imgsrc = (response.state ? "ihcoutput230.png" : "ihcoutput230_off.png");
-			document.getElementById(moduleID).innerHTML='<img src=\"'+imgsrc+'\"><br>IHC Output<br>Module '+response.moduleNumber;
-		} else if(response.type == "inputModuleState") {
-			var moduleID = "inputModule"+response.moduleNumber;
-			var imgsrc = (response.state ? "ihcinput24.png" : "ihcinput24_off.png");
-			document.getElementById(moduleID).innerHTML='<img src=\"'+imgsrc+'\"><br>IHC Input<br>Module '+response.moduleNumber;
 		}
 	}
 }
@@ -72,12 +54,15 @@ function handleResponse() {
 </script>
 
 <body>
-<h2>Configuration <input type=button onclick="location.href='index.php'" value='Back'><input type=button onclick=saveConfiguration() value='Save'></h2>
 <?php
-	echo "Select a I/O module to configure it.<br>";
+	echo "<h2>Configuration <input type=button onclick=\"location.href='index.php?id=$id'\" value='Back'></h2>";
+	echo "<button onClick=\"location.href='kpinput.php?id=$id&action=setCode&level=superuser'\">Set superuser code</button> ";
+	echo "<button onClick=\"location.href='kpinput.php?id=$id&action=setCode&level=admin'\">Set admin code</button>";
+	echo "<br><br>";
+	echo "Select an output module to configure it.<br>";
 	echo "<h3>IHC Output modules</h3>";
 	for($cnt = 1; $cnt <=16; $cnt++) {
-		echo "<button id=\"outputModule$cnt\" type=\"button\" onclick=\"location.href='IHCModuleConfiguration.php?moduleType=output&moduleNumber=$cnt'\">
+		echo "<button id=\"outputModule$cnt\" type=\"button\" onclick=\"location.href='IHCModuleConfiguration.php?id=$id&moduleType=output&moduleNumber=$cnt'\">
 		<img src=\"ihcoutput230.png\" alt=\"IHC Output Module $cnt\" />
 		<br/>IHC Output<br>Module $cnt</button>";
 		if($cnt == 8) {
@@ -86,7 +71,7 @@ function handleResponse() {
 	}
 	echo "<h3>IHC Input modules</h3>";
 	for($cnt = 1; $cnt <=8; $cnt++) {
-		echo "<button id=\"inputModule$cnt\" type=\"button\" onclick=\"location.href='IHCModuleConfiguration.php?moduleType=input&moduleNumber=$cnt'\">
+		echo "<button id=\"inputModule$cnt\" type=\"button\" onclick=\"location.href='IHCModuleConfiguration.php?id=$id&moduleType=input&moduleNumber=$cnt'\">
 		<img src=\"ihcinput24.png\" alt=\"IHC Input Module $cnt\" />
 		<br/>IHC Input<br>Module $cnt</button>";
 	}
