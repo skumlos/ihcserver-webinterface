@@ -159,7 +159,7 @@ function handleResponse() {
 						var outputState = response.modules.outputModules[i].outputStates[j].outputState;
 						var outputDescription = response.modules.outputModules[i].outputStates[j].description;
 						if(outputDescription == "") { outputDescription = "Output "+moduleNumber+"."+outputNumber; };
-						ioParagraph += ("<input type=\"button\" style=\"background-color:"+(outputState?"lightgreen":"lightgrey")+"\; height:60px\; width:100px\; white-space:normal\; word-wrap:break-word\; vertical-align:middle\;\" id=\"output."+moduleNumber+"."+outputNumber+"\" value=\""+outputDescription+"\" onclick=toggleOutput("+moduleNumber+","+outputNumber+")> ");
+						ioParagraph += ("<input type=\"button\" style=\"background-color:"+(outputState?"lightgreen":"lightgrey")+"\; height:60px\; width:100px\; white-space:normal\; word-wrap:break-word\; margin-right:4px; vertical-align:middle\;\" id=\"output."+moduleNumber+"."+outputNumber+"\" value=\""+outputDescription+"\" onclick=toggleOutput("+moduleNumber+","+outputNumber+")>");
 					}
 					ioParagraph += ("<br>");
 				}
@@ -176,7 +176,7 @@ function handleResponse() {
 						var inputState = response.modules.inputModules[i].inputStates[j].inputState;
 						var inputDescription = response.modules.inputModules[i].inputStates[j].description;
 						if(inputDescription == "") { inputDescription = "Input "+moduleNumber+"."+inputNumber; };
-						ioParagraph += ("<input type=\"button\" style=\"background-color:"+(inputState?"lightgreen":"lightgrey")+"\; height:60px\; width:100px\; white-space:normal\; word-wrap:break-word\; vertical-align:middle\;\" id=\"input."+moduleNumber+"."+inputNumber+"\" value=\""+inputDescription+"\"> ");
+						ioParagraph += ("<input type=\"button\" style=\"background-color:"+(inputState?"lightgreen":"lightgrey")+"\; height:60px\; width:100px\; white-space:normal\; word-wrap:break-word\; margin-right:4px; vertical-align:middle\;\" id=\"input."+moduleNumber+"."+inputNumber+"\" value=\""+inputDescription+"\">");
 					}
 					ioParagraph += ("<br>");
 				}
@@ -196,15 +196,14 @@ function handleResponse() {
 </head>
 <body onresize="alignFloatLayers()" onscroll="alignFloatLayers()">
 <?php
-echo "<div id=\"controlpanel\" style=\"width:98%; background:#d0d0ff; border:solid black 1px; padding:5px; font-family:arial; font-size:20px; text-align:center\">";
+echo "<div id=\"controlpanel\" style=\"opacity:0.9; width:98%; background:#d0d0ff; border:solid black 1px; padding:5px; font-family:arial; font-size:20px; text-align:center\">";
 echo "<strong>IHCServer Webinterface v$version</strong>";
-echo "<button onClick=\"setAlarm()\" id=\"alarm\" style=\"height:74px; width:92px; float: left\"<img src='loading.gif'><br>Alarm</button> ";
+echo "<button onClick=\"setAlarm()\" id=\"alarm\" style=\"height:74px; width:92px; float: left\"<img src='loading.gif'><br>Alarm</button>";
 echo "<button onClick=\"location.href='kpinput.php?id=$id&action=login'\" style=\"height:74px; width:74px; float: right\" align=right><img src='login.png'><br>Login</button>";
-echo "<button onClick=\"location.href='configuration.php?id=$id'\" style=\"height:74px; float: right\"><img src='configuration.png'><br>Configuration</button>";
+echo "<button onClick=\"location.href='configuration.php?id=$id'\" style=\"height:74px; float: right; margin-right:5px;\"><img src='configuration.png'><br>Configuration</button>";
 echo "</div>";
 ?>
-<br><br><br><br>
-<p id=ioOverview></p>
+<p id=ioOverview style="margin-top:104px; margin-left:auto; margin-right:auto; text-align:center;"></p>
 <script>
 addFloatLayer('controlpanel',5,5,10);
 function detach(layername){

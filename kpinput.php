@@ -70,8 +70,8 @@ function buttonPressed(key) {
 </head>
 <body>
 <?php
-	echo "<input type=button onclick=\"history.back()\" value='Back'>";
-	echo "<p id=\"contents\">";
+	echo "<p id=\"contents\" style=\"margin-left:auto; margin-right:auto; text-align:center\">";
+	echo "<input type=button onclick=\"history.back()\" value='Back'><br><br>";
 	echo "<input type='password' id='password' name='password' style=\"font-size:28;\" size='9'>";
 	echo "<br>";
 	echo "<br>";
