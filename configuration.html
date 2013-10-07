@@ -1,0 +1,104 @@
+<html>
+<meta name="keywords" content="HTML, CSS, JavaScript">
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+<link href="ihcserver.css" rel="stylesheet" type="text/css">
+<script language="javascript" src="gestures.js"></script>
+
+<script>
+if(!sessionStorage.ihcSessionID) {
+	alert("No session ID!");
+}
+var sessionid=sessionStorage.ihcSessionID;
+
+function createRequestObject() {
+	var ro;
+	var browser = navigator.appName;
+	if(browser == "Microsoft Internet Explorer"){
+		ro = new ActiveXObject("Microsoft.XMLHTTP");
+	} else {
+		ro = new XMLHttpRequest();
+	}
+	return ro;
+}
+
+var http = createRequestObject();
+
+function getAll() {
+	var request = new Object();
+	request.type = "getAll";
+	request.id = sessionid;
+	http.open('POST', 'ihcrequest',true);
+	http.onreadystatechange = handleResponse;
+	http.send(JSON.stringify(request));
+}
+
+function handleResponse() {
+	if(http.readyState == 4 && http.status == 200){
+		var response = JSON.parse(http.responseText);
+		http = null;
+		delete http;
+		if(response.type == "allModules") {
+			for(var i = 0; i < response.modules.outputModules.length; i++) {
+				var state = response.modules.outputModules[i].state;
+				var moduleID = "outputModule"+response.modules.outputModules[i].moduleNumber;
+				var imgsrc = (state ? "ihcoutput230.png" : "ihcoutput230_off.png");
+				document.getElementById(moduleID).innerHTML='<img src=\"'+imgsrc+'\"><br>IHC Output<br>Module '+response.modules.outputModules[i].moduleNumber;
+			}
+			for(var i = 0; i < response.modules.inputModules.length; i++) {
+				var state = response.modules.inputModules[i].state;
+				var moduleID = "inputModule"+response.modules.inputModules[i].moduleNumber;
+				var imgsrc = (state ? "ihcinput24.png" : "ihcinput24_off.png");
+				document.getElementById(moduleID).innerHTML='<img src=\"'+imgsrc+'\"><br>IHC Input<br>Module '+response.modules.inputModules[i].moduleNumber;
+			}
+		}
+	}
+}
+
+function configureModule(type,number) {
+	sessionStorage.ihcConfigModuleNumber = number;
+	sessionStorage.ihcConfigModuleType = type;
+	location.href='ihcmoduleconfiguration.html';
+}
+
+function setSuperUserCode() {
+	sessionStorage.ihcKeypadAction = "setSuperUserCode";
+	location.href="keypad.html";
+}
+
+function setAdminCode() {
+	sessionStorage.ihcKeypadAction = "setAdminCode";
+	location.href="keypad.html";
+}
+</script>
+
+<body onmousedown="mousedown(event)" onmouseup="mouseup(event)">
+<h2>Configuration <input type=button onclick="location.href='index2.html'" value='Back'></h2>
+<button onClick='setSuperUserCode()'>Set superuser code</button>
+<button onClick='setAdminCode()'>Set admin code</button>
+<br><br>
+Select an output module to configure it.<br>
+<script>
+document.write("<h3>IHC Output modules</h3>");
+for(var cnt = 1; cnt <=16; cnt++) {
+	var idStr = "outputModule"+cnt;
+	var onclickStr = "configureModule(\"output\","+cnt+")";
+	document.write("<button id='"+idStr+"' type='button' onclick='"+onclickStr+"'>");
+	document.write("<img src='ihcoutput230.png' alt='IHC Output Module "+cnt+"'>");
+	document.write("<br>IHC Output<br>Module "+cnt+"</button>");
+	if(cnt == 8) {
+		document.write("<br>");
+	}
+}
+
+document.write("<h3>IHC Input modules</h3>");
+for(var cnt = 1; cnt <=8; cnt++) {
+	var idStr = "inputModule"+cnt;
+	var onclickStr = "configureModule(\"input\","+cnt+")";
+	document.write("<button id='"+idStr+"' type='button' onclick='"+onclickStr+"'>");
+	document.write("<img src=\"ihcinput24.png\" alt=\"IHC Input Module "+cnt+"\">");
+	document.write("<br/>IHC Input<br>Module "+cnt+"</button>");
+}
+getAll();
+</script>
+</body>
+</html>

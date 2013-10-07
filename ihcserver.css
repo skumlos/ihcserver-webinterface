@@ -1,0 +1,79 @@
+body {
+	background-color: rgba(79,79,79,1.0); 
+	color: deepskyblue;
+}
+
+#ioOverview {
+	background-color: rgba(79,79,79,1.0);
+	margin-top: 104px;
+	margin-left: auto;
+	margin-right: auto;
+	text-align: center;
+}
+
+#controlpanel {
+	font-weight:bold;
+	width:98%;
+	background-color:rgba(69,69,69,0.8);
+	border: solid black 1px;
+	padding: 5px;
+	font-family: arial;
+	font-size: 20px;
+}
+
+#keypadContents {
+	margin-left: auto; 
+	margin-right: auto; 
+	text-align: center;
+}
+
+#password {
+	font-size: 48; 
+	font-weight: bold;
+	width: 200px;
+}
+
+.controlpanelButton {
+	height: 74px;
+	float: right;
+	margin-left: 5px;
+	padding-left: 5px;
+	padding-right: 5px;
+}
+
+.keypadbutton {
+	font-size: 28px;
+	height: 80px;
+	width: 80px;
+	margin-left: 5px;
+	margin-top: 3px;
+	horizontal-align: middle;
+	vertical-align :middle;
+}
+
+.info {
+	margin-top: 20px;
+	font-size: 10px;
+	font-weight: bold;
+}
+
+.module {
+	text-align: center;
+	display: none;
+}
+
+
+.iobutton {
+	height: 60px;
+	width: 100px;
+	white-space: normal; 
+	word-wrap: break-word;
+	margin-right: 4px;
+	vertical-align: middle;	
+}
+
+.outputbutton {
+}
+
+.inputbutton {
+}

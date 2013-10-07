@@ -1,0 +1,335 @@
+<html>
+<head>
+<meta name="keywords" content="HTML, CSS, JavaScript">
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+
+<link href="ihcserver.css" rel="stylesheet" type="text/css">
+<script language="javascript" src="FloatLayer.js"></script>
+<script>
+var title = "IHCServer Webinterface";
+var version = "0.3";
+
+// following stolen from http://ajaxian.com/archives/uuid-generator-in-javascript
+/*
+ * Create and return a "version 4" RFC-4122 UUID string.
+ */
+function randomUUID() {
+  var s = [], itoh = '0123456789ABCDEF';
+ 
+  // Make array of random hex digits. The UUID only has 32 digits in it, but we
+  // allocate an extra items to make room for the '-'s we'll be inserting.
+  for (var i = 0; i < 36; i++) s[i] = Math.floor(Math.random()*0x10);
+ 
+  // Conform to RFC-4122, section 4.4
+  s[14] = 4;  // Set 4 high bits of time_high field to version
+  s[19] = (s[19] & 0x3) | 0x8;  // Specify 2 high bits of clock sequence
+ 
+  // Convert to hex chars
+  for (var i = 0; i < 36; i++) s[i] = itoh[s[i]];
+ 
+  // Insert '-'s
+  s[8] = s[13] = s[18] = s[23] = '-';
+ 
+  return s.join('');
+}
+
+if(!sessionStorage.ihcSessionID) {
+	sessionStorage.ihcSessionID=randomUUID();
+}
+
+if(!sessionStorage.ihcLastEventNumber) {
+	sessionStorage.ihcLastEventNumber=0;
+}
+
+var sessionid=sessionStorage.ihcSessionID;
+
+var alarmState=false;
+
+document.write("<title>"+title+" v"+version+"</title>");
+function createRequestObject() {
+	var ro;
+	var browser = navigator.appName;
+	if(browser == "Microsoft Internet Explorer"){
+		ro = new ActiveXObject("Microsoft.XMLHTTP");
+	} else {
+		ro = new XMLHttpRequest();
+	}
+	return ro;
+}
+
+var ihcrequests = null;
+var eventrequest = null;
+var alarmStateRequest = null;
+var init = true;
+
+function startEventListener() {
+	var request = new Object();
+	request.lastEventNumber = parseInt(sessionStorage.ihcLastEventNumber);
+	eventrequest = createRequestObject();
+	var jsonRequest = JSON.stringify(request);
+        eventrequest.open('POST', 'ihcevents',true);
+        eventrequest.setRequestHeader("Content-type", "application/json");
+        eventrequest.setRequestHeader("Content-length", jsonRequest.length);
+        eventrequest.setRequestHeader("Connection", "close");
+        eventrequest.onreadystatechange = updateIOs;
+        eventrequest.send(jsonRequest);
+}
+
+function login() {
+	sessionStorage.ihcKeypadAction = "login"; 
+	location.href='keypad.html'
+}
+
+function setAlarm() {
+	if(eventrequest != null) {
+		eventrequest.abort();
+		delete eventrequest;
+		eventrequest = null;
+	}
+	if(alarmStateRequest != null) {
+		alarmStateRequest.abort();
+		delete alarmStateRequest;
+		alarmStateRequest = null;
+	}
+	if(alarmState) {
+		sessionStorage.ihcKeypadAction = "disarm-alarm"; 
+	} else {
+		sessionStorage.ihcKeypadAction = "arm-alarm"; 
+	}
+	location.href='keypad.html';
+}
+
+function setAlarmButton(state) {
+	if(state) {
+		document.getElementById('alarm').style.backgroundColor="red";
+		document.getElementById('alarm').style.color="white";
+		document.getElementById('alarm').innerHTML="<img src='alarm-armed.png'><br>Alarm on";
+	} else if(!state) {
+		document.getElementById('alarm').style.backgroundColor="lightgreen";
+		document.getElementById('alarm').style.color="black";
+		document.getElementById('alarm').innerHTML="<img src='alarm-disarmed.png'><br>Alarm off";
+	}
+}
+
+function setAlarmState() {
+	if(alarmStateRequest.readyState == 4 && alarmStateRequest.status == 200) {
+		var response = JSON.parse(alarmStateRequest.responseText);
+		delete alarmStateRequest;
+		alarmStateRequest = null;
+		if(response.type == "getAlarmState") {
+			if(response.state == true) {
+				alarmState = true;
+				setAlarmButton(alarmState);
+			} else if(response.state == false) {
+				alarmState = false;
+				setAlarmButton(alarmState);
+			} else {
+				// Something went wrong, start over
+				getAlarmState();
+			}
+			getAll();
+		}
+	} else if(alarmStateRequest.readyState == 4 && eventrequest.status != 200) {
+		alert("Ballade");
+	}
+}
+
+function getAlarmState() {
+        var request = new Object();
+        request.type = "getAlarmState";
+        request.id = sessionid;
+	var jsonRequest = JSON.stringify(request);
+	alarmStateRequest = createRequestObject();
+        alarmStateRequest.open('POST','ihcrequest',true);
+        alarmStateRequest.setRequestHeader("Content-type", "application/json");
+        alarmStateRequest.setRequestHeader("Content-length", jsonRequest.length);
+        alarmStateRequest.setRequestHeader("Connection", "close");
+        alarmStateRequest.onreadystatechange = setAlarmState;
+        alarmStateRequest.send(jsonRequest);
+}
+
+function updateIOs() {
+	if(eventrequest.readyState == 4 && eventrequest.status == 200) {
+		var responseText = eventrequest.responseText;
+                var response = null;
+		try {
+			response = JSON.parse(responseText);
+		} catch (err) {
+			return;
+		}
+		sessionStorage.ihcLastEventNumber = response.lastEventNumber;
+		delete eventrequest;
+		eventrequest = null;
+		if(response.type == "outputState") {
+			var moduleID = "output."+response.moduleNumber+"."+response.ioNumber;
+			var color = (response.state ? "lightgreen" : "lightgray");
+			document.getElementById(moduleID).style.background = color;
+			document.getElementById(moduleID).style.background.url = (response.state ? "button_on.png" : "button_off.png");
+		} else if(response.type == "inputState") {
+			var moduleID = "input."+response.moduleNumber+"."+response.ioNumber;
+			var color = (response.state ? "lightgreen" : "lightgray");
+			document.getElementById(moduleID).style.background = color;
+		} else if(response.type == "alarmState") {
+			alarmState = response.state;
+			setAlarmButton(alarmState);
+		}
+		startEventListener();
+	} else if(eventrequest.readyState == 4 && eventrequest.status == 403) {
+		delete eventrequest;
+		eventrequest = null;
+		alert("Access denied! Please login.");
+	}
+}
+
+function toggleOutput(moduleNumber,outputNumber) {
+	var request = new Object();
+	request.type = "toggleOutput";
+	request.moduleNumber = moduleNumber;
+	request.ioNumber = outputNumber;
+	request.id = sessionid;
+	var jsonRequest = JSON.stringify(request);
+	ihcrequests = createRequestObject();
+	ihcrequests.open('POST', 'ihcrequest',true);
+        ihcrequests.setRequestHeader("Content-type", "application/json");
+        ihcrequests.setRequestHeader("Content-length", jsonRequest.length);
+       	ihcrequests.setRequestHeader("Connection", "close");
+//        ihcrequests.onreadystatechange = handleResponse;
+        ihcrequests.send(jsonRequest);
+}
+
+function getAll() {
+	var request = new Object();
+	request.type = "getAll";
+	request.id = sessionid;
+	var jsonRequest = JSON.stringify(request);
+	ihcrequests = createRequestObject();
+        ihcrequests.open('POST', 'ihcrequest',true);
+        ihcrequests.setRequestHeader("Content-type", "application/json");
+        ihcrequests.setRequestHeader("Content-length", jsonRequest.length);
+       	ihcrequests.setRequestHeader("Connection", "close");
+        ihcrequests.onreadystatechange = handleResponse;
+        ihcrequests.send(jsonRequest);
+}
+
+function handleResponse() {
+	if(ihcrequests.readyState == 4 && ihcrequests.status == 200){
+		var response = JSON.parse(ihcrequests.responseText);
+		if(response.type == "allModules") {
+			for(var i = 0; i < response.modules.outputModules.length; i++) {
+				if(response.modules.outputModules[i].state) {
+					var divname = "output."+response.modules.outputModules[i].moduleNumber;
+					document.getElementById(divname).style.display = "block";
+					for(var j=0; j < response.modules.outputModules[i].outputStates.length; j++) {
+						var moduleNumber = response.modules.outputModules[i].moduleNumber;
+						var outputNumber = response.modules.outputModules[i].outputStates[j].outputNumber;
+						var outputState = response.modules.outputModules[i].outputStates[j].outputState;
+						var outputDescription = response.modules.outputModules[i].outputStates[j].description;
+						if(outputDescription == "") { outputDescription = "Output "+moduleNumber+"."+outputNumber; };
+						var outputName = "output."+moduleNumber+"."+outputNumber;
+						document.getElementById(outputName).value = outputDescription;
+						document.getElementById(outputName).style.background = (outputState ? "lightgreen":"lightgrey");
+					}
+				}
+			}
+			for(var i = 0; i < response.modules.inputModules.length; i++) {
+				if(response.modules.inputModules[i].state) {
+					var divname = "input."+response.modules.outputModules[i].moduleNumber;
+					document.getElementById(divname).style.display = "block";
+					for(var j=0; j < response.modules.inputModules[i].inputStates.length; j++) {
+						var moduleNumber = response.modules.inputModules[i].moduleNumber;
+						var inputNumber = response.modules.inputModules[i].inputStates[j].inputNumber;
+						var inputState = response.modules.inputModules[i].inputStates[j].inputState;
+						var inputDescription = response.modules.inputModules[i].inputStates[j].description;
+						if(inputDescription == "") { inputDescription = "Input "+moduleNumber+"."+inputNumber; };
+						var inputName = "input."+moduleNumber+"."+inputNumber;
+						document.getElementById(inputName).value = inputDescription;
+						document.getElementById(inputName).style.background = (inputState ? "lightgreen":"lightgrey");
+					}
+				}
+			}
+			// I/Os are now set up, get alarm state and start listening for events
+			if(init) {
+				startEventListener();
+				getAlarmState();
+				init = false;
+			}
+		}
+	} if(ihcrequests.readyState == 4 && ihcrequests.status == 404){
+		alert("Problem retrieving data\n");
+	}
+}
+
+</script>
+</head>
+<body onresize="alignFloatLayers()" onscroll="alignFloatLayers()">
+<div id="controlpanel">
+<button class="controlpanelButton" onClick="login()"><img src="login.png"><br>Login</button>
+<button class="controlpanelButton" onClick="location.href='configuration.html'"><img src="configuration.png"><br>Configuration</button>
+<button class="controlpanelButton" onClick="setAlarm()" id="alarm" style="float: left"<img src="loading.gif"><br>Alarm</button>
+<script>
+document.write("<div style=\"text-align: center; padding-left: 180px;\"><p>"+title+"</p></div>");
+</script>
+</div>
+<div id="ioOverview">
+<script>
+var outputModules = 16;
+var outputModuleOutputs = 8;
+var inputModules = 8;
+var inputModuleInputs = 16;
+
+for (var i=0;i<outputModules;i++)
+{
+	var name = "output."+(i+1);
+	document.write("<div id=\""+name+"\" class=\"module outputModule\">");
+	document.write("<h3>Output module "+(i+1)+"</h3>");
+	for(var j=0;j<outputModuleOutputs;j++) {
+		document.write("<input class=\"iobutton outputbutton\" type=\"button\" id=\"output."+(i+1)+"."+(j+1)+"\" onclick=toggleOutput("+(i+1)+","+(j+1)+")>");
+	}
+	document.write("</div>");
+}
+
+for (var i=0;i<inputModules;i++)
+{
+	var name = "input."+(i+1);
+	document.write("<div id=\""+name+"\" class=\"module inputModule\">");
+	document.write("<h3>Input module "+(i+1)+"</h3>");
+	for(var j=0;j<inputModuleInputs;j++) {
+		if(j == 8) {
+			document.write("<br><br>");
+		}
+		var inputName = "input."+(i+1)+"."+(j+1);
+		document.write("<input class=\"iobutton inputbutton\" type=\"button\" id=\""+inputName+"\" onclick=toggleInput("+(i+1)+","+(j+1)+")>");
+	}
+	document.write("</div>");
+}
+<!-- end of ioOverview -->
+</script>
+</div>
+<script>
+addFloatLayer('controlpanel',5,5,2);
+function detach(layername){
+	lay  = document.getElementById(layername);
+	left = getXCoord(lay);
+	top  = getYCoord(lay);
+	lay.style.position = 'absolute';
+	lay.style.top      = top;
+	lay.style.left     = left;
+	getFloatLayer(layername).initialize();
+	alignFloatLayers();
+}
+detach('controlpanel');
+getAll();
+</script>
+<div class="info">
+<script>
+var author = "Martin Hejnfelt";
+var email = "martin@hejnfelt.com";
+var year = "2013";
+document.write(title+" v"+version);
+document.write("<br>");
+document.write("(C) "+year+" by "+author+"("+email+")");
+document.write("<br>IHC and IHC modules are properties of LK A/S<br>");
+</script>
+</div>
+</body>
+</html>
