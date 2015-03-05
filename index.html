@@ -41,6 +41,48 @@ if(!sessionStorage.ihcLastEventNumber) {
 	sessionStorage.ihcLastEventNumber=0;
 }
 
+var host = window.location.host;
+
+var eventSocket;
+
+function startEventSocket() {
+	eventSocket = new WebSocket("ws://"+host+"/ihcevents-ws");
+	eventSocket.onopen = function() {
+		document.getElementById("eventSocketStatus").style.background='lime';
+	}
+
+	eventSocket.onmessage = function(e) {
+		document.getElementById("eventSocketStatus").style.background='yellow';
+//		alert(e.data);
+		var response = null;
+		try {
+			response = JSON.parse(e.data);
+		} catch (err) {
+			return;
+		}
+		sessionStorage.ihcLastEventNumber = response.lastEventNumber;
+		if(response.type == "outputState") {
+			var moduleID = "output."+response.moduleNumber+"."+response.ioNumber;
+			var color = (response.state ? "lightgreen" : "lightgray");
+			document.getElementById(moduleID).style.background = color;
+			document.getElementById(moduleID).style.background.url = (response.state ? "button_on.png" : "button_off.png");
+		} else if(response.type == "inputState") {
+			var moduleID = "input."+response.moduleNumber+"."+response.ioNumber;
+			var color = (response.state ? "lightgreen" : "lightgray");
+			document.getElementById(moduleID).style.background = color;
+		} else if(response.type == "alarmState") {
+			alarmState = response.state;
+			setAlarmButton(alarmState);
+		}
+		document.getElementById("eventSocketStatus").style.background='lime';
+	}
+
+	eventSocket.onclose = function() {
+		document.getElementById("eventSocketStatus").style.background='red';
+		setTimeout(function() { startEventSocket(); }, 1500);
+	}
+}
+
 var sessionid=sessionStorage.ihcSessionID;
 
 var alarmState=false;
@@ -58,22 +100,8 @@ function createRequestObject() {
 }
 
 var ihcrequests = null;
-var eventrequest = null;
 var alarmStateRequest = null;
 var init = true;
-
-function startEventListener() {
-	var request = new Object();
-	request.lastEventNumber = parseInt(sessionStorage.ihcLastEventNumber);
-	eventrequest = createRequestObject();
-	var jsonRequest = JSON.stringify(request);
-        eventrequest.open('POST', 'ihcevents',true);
-        eventrequest.setRequestHeader("Content-type", "application/json");
-        eventrequest.setRequestHeader("Content-length", jsonRequest.length);
-        eventrequest.setRequestHeader("Connection", "close");
-        eventrequest.onreadystatechange = updateIOs;
-        eventrequest.send(jsonRequest);
-}
 
 function login() {
 	sessionStorage.ihcKeypadAction = "login"; 
@@ -81,11 +109,6 @@ function login() {
 }
 
 function setAlarm() {
-	if(eventrequest != null) {
-		eventrequest.abort();
-		delete eventrequest;
-		eventrequest = null;
-	}
 	if(alarmStateRequest != null) {
 		alarmStateRequest.abort();
 		delete alarmStateRequest;
@@ -147,40 +170,15 @@ function getAlarmState() {
         alarmStateRequest.onreadystatechange = setAlarmState;
         alarmStateRequest.send(jsonRequest);
 }
-
+/*
 function updateIOs() {
-	if(eventrequest.readyState == 4 && eventrequest.status == 200) {
-		var responseText = eventrequest.responseText;
-                var response = null;
-		try {
-			response = JSON.parse(responseText);
-		} catch (err) {
-			return;
-		}
-		sessionStorage.ihcLastEventNumber = response.lastEventNumber;
-		delete eventrequest;
-		eventrequest = null;
-		if(response.type == "outputState") {
-			var moduleID = "output."+response.moduleNumber+"."+response.ioNumber;
-			var color = (response.state ? "lightgreen" : "lightgray");
-			document.getElementById(moduleID).style.background = color;
-			document.getElementById(moduleID).style.background.url = (response.state ? "button_on.png" : "button_off.png");
-		} else if(response.type == "inputState") {
-			var moduleID = "input."+response.moduleNumber+"."+response.ioNumber;
-			var color = (response.state ? "lightgreen" : "lightgray");
-			document.getElementById(moduleID).style.background = color;
-		} else if(response.type == "alarmState") {
-			alarmState = response.state;
-			setAlarmButton(alarmState);
-		}
-		startEventListener();
-	} else if(eventrequest.readyState == 4 && eventrequest.status == 403) {
+	if(eventrequest.readyState == 4 && eventrequest.status == 403) {
 		delete eventrequest;
 		eventrequest = null;
 		alert("Access denied! Please login.");
 	}
 }
-
+*/
 function toggleOutput(moduleNumber,outputNumber) {
 	var request = new Object();
 	request.type = "toggleOutput";
@@ -249,7 +247,7 @@ function handleResponse() {
 			}
 			// I/Os are now set up, get alarm state and start listening for events
 			if(init) {
-				startEventListener();
+				startEventSocket();
 				getAlarmState();
 				init = false;
 			}
@@ -262,6 +260,7 @@ function handleResponse() {
 </script>
 </head>
 <body onresize="alignFloatLayers()" onscroll="alignFloatLayers()">
+<!-- <div id='overlay'></div> -->
 <div id="controlpanel">
 <button class="controlpanelButton" onClick="login()"><img src="login.png"><br>Login</button>
 <button class="controlpanelButton" onClick="location.href='configuration.html'"><img src="configuration.png"><br>Configuration</button>
@@ -320,6 +319,7 @@ function detach(layername){
 detach('controlpanel');
 getAll();
 </script>
+<div id='eventSocketStatus'></div>
 <div class="info">
 <script>
 var author = "Martin Hejnfelt";
