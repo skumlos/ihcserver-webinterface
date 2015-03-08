@@ -54,7 +54,6 @@ function startEventSocket() {
 
 	eventSocket.onmessage = function(e) {
 		document.getElementById("eventSocketStatus").style.background='yellow';
-//		alert(e.data);
 		var response = null;
 		try {
 			response = JSON.parse(e.data);
@@ -74,8 +73,12 @@ function startEventSocket() {
 		} else if(response.type == "alarmState") {
 			alarmState = response.state;
 			setAlarmButton(alarmState);
+		} else if(response.type == "ping") {
+			var r = new Object();
+			r.type = "pong";
+			eventSocket.send(JSON.stringify(r));
 		}
-		document.getElementById("eventSocketStatus").style.background='lime';
+		setTimeout(function(){document.getElementById("eventSocketStatus").style.background='lime';},250);
 	}
 
 	eventSocket.onclose = function() {
