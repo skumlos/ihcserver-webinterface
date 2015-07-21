@@ -44,6 +44,13 @@ if(!sessionStorage.ihcLastEventNumber) {
 
 var host = window.location.host;
 
+var sessionid = sessionStorage.ihcSessionID;
+var alarmState = false;
+var ihcrequests = null;
+var alarmStateRequest = null;
+var userlevelRequest = null;
+var init = true;
+
 var eventSocket;
 
 function startEventSocket() {
@@ -87,10 +94,6 @@ function startEventSocket() {
 	}
 }
 
-var sessionid=sessionStorage.ihcSessionID;
-
-var alarmState=false;
-
 document.write("<title>"+title+" v"+version+"</title>");
 function createRequestObject() {
 	var ro;
@@ -103,9 +106,6 @@ function createRequestObject() {
 	return ro;
 }
 
-var ihcrequests = null;
-var alarmStateRequest = null;
-var init = true;
 
 function buttonPressed(key) {
 	var e = document.getElementById('keypadInput');
@@ -204,8 +204,8 @@ function setAlarmState() {
 			}
 			getAll();
 		}
-	} else if(alarmStateRequest.readyState == 4 && eventrequest.status != 200) {
-		alert("Ballade");
+	} else if(alarmStateRequest.readyState == 4 && alarmStateRequest.status != 200) {
+		alert("Could not get alarm state");
 	}
 }
 
@@ -222,6 +222,34 @@ function getAlarmState() {
         alarmStateRequest.onreadystatechange = setAlarmState;
         alarmStateRequest.send(jsonRequest);
 }
+
+function setUserlevel() {
+	if(userlevelRequest.readyState == 4 && userlevelRequest.status == 200) {
+		var response = JSON.parse(userlevelRequest.responseText);
+		delete userlevelRequest;
+		userlevelRequest = null;
+		if(response.type == "getUserlevel") {
+			document.getElementById("userlevel").innerHTML=response.Userlevel;
+		}
+	} else if(userlevelRequest.readyState == 4 && userlevelRequest.status != 200) {
+		alert("Could not get userlevel");
+	}
+}
+
+function getUserlevel() {
+        var request = new Object();
+        request.type = "getUserlevel";
+        request.id = sessionid;
+	var jsonRequest = JSON.stringify(request);
+	userlevelRequest = createRequestObject();
+        userlevelRequest.open('POST','ihcrequest',true);
+        userlevelRequest.setRequestHeader("Content-type", "application/json");
+        userlevelRequest.setRequestHeader("Content-length", jsonRequest.length);
+        userlevelRequest.setRequestHeader("Connection", "close");
+        userlevelRequest.onreadystatechange = setUserlevel;
+        userlevelRequest.send(jsonRequest);
+}
+
 /*
 function updateIOs() {
 	if(eventrequest.readyState == 4 && eventrequest.status == 403) {
@@ -390,6 +418,7 @@ function detach(layername){
 }
 detach('controlpanel');
 getAll();
+getUserlevel();
 </script>
 <div id='eventSocketStatus'></div>
 <div id='userlevel'>BASIC</div>
