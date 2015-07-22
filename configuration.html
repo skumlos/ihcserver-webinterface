@@ -3,11 +3,13 @@
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
 <link href="ihcserver.css" rel="stylesheet" type="text/css">
 <script language="javascript" src="gestures.js"></script>
-
+<script src="sha1.js"></script>
 <script>
+
 if(!sessionStorage.ihcSessionID) {
 	alert("No session ID!");
 }
+
 var sessionid=sessionStorage.ihcSessionID;
 
 function createRequestObject() {
@@ -62,16 +64,108 @@ function configureModule(type,number) {
 
 function setSuperUserCode() {
 	sessionStorage.ihcKeypadAction = "setSuperUserCode";
-	location.href="keypad.html";
+	showKeypad()
 }
 
 function setAdminCode() {
 	sessionStorage.ihcKeypadAction = "setAdminCode";
-	location.href="keypad.html";
+	showKeypad();
 }
+
+function showKeypad() {
+	document.getElementById('OK').disabled = true;
+        document.getElementById('overlay').className='visible';
+        document.getElementById('keypad').className='visible keypad keypadLrg modal';
+	currentInput =  document.getElementById('keypadInput');
+}
+
+function hideKeypad() {
+        document.getElementById('overlay').className='keypad keypadLrg hidden';
+        document.getElementById('keypad').className='keypad keypadLrg hidden';
+        sessionStorage.ihcKeypadAction = "";
+        document.getElementById('keypadInput').value = "";
+        document.getElementById('keypadInputValidate').value = "";
+}
+
+var ihcrequests;
+var currentInput;
+
+function handleKeypadResponse() {
+	if(ihcrequests.readyState == 4){
+		if(ihcrequests.status == 200) {
+			alert("OK");
+		} else {
+			alert("Failed");
+		}
+		ihcrequests = null;
+		delete ihcrequests;
+	}
+}
+
+function buttonPressed(key) {
+	var e = document.getElementById('keypadInput');
+	if(key == 'OK') {
+                var req = new Object();
+		req.type = "keypadAction";
+		req.action = sessionStorage.ihcKeypadAction;
+		req.input = String(CryptoJS.SHA1(e.value));
+		e.value = "";
+		req.id = sessionid;
+		var jsonRequest = JSON.stringify(req);
+		ihcrequests = createRequestObject();
+		ihcrequests.open("POST", "ihcrequest", true);
+		ihcrequests.setRequestHeader("Content-type", "application/json");
+		ihcrequests.setRequestHeader("Content-length", jsonRequest.length);
+		ihcrequests.setRequestHeader("Connection", "close");
+		ihcrequests.onreadystatechange = handleKeypadResponse;
+		ihcrequests.send(jsonRequest);
+		hideKeypad();
+	} else if(key == 'CLR') {
+		currentInput.value = "";
+		document.getElementById('OK').disabled = true;
+	} else {
+		currentInput.value += key;
+		var input = document.getElementById('keypadInput');
+		var validate = document.getElementById('keypadInputValidate');
+		if(input.value != "" && validate.value != "" && input.value == validate.value) {
+			document.getElementById('OK').disabled = false;
+		} else {
+			document.getElementById('OK').disabled = true;
+		}
+	}
+}
+
+function activeInput(input) {
+	currentInput=input;	
+}
+
 </script>
 
 <body onmousedown="mousedown(event)" onmouseup="mouseup(event)">
+<div id='overlay' class='hidden'></div>
+<div id='keypad' class='hidden keypad keypadLrg'>
+<input type='image' id='closeButton' src='close.png' onclick='hideKeypad()'/>
+<span class='inputTitle'>New code</span>
+<input type='password' onfocus='activeInput(this)' class='password keypadInput' id='keypadInput' name='password'><br>
+<span class='inputTitle'>Repeat</span>
+<input type='password' onfocus='activeInput(this)' class='passwprd keypadInput' id='keypadInputValidate' name='passwordValidate'>
+<br><br>
+<input type='button' class="keypadbutton" id="1" onclick=buttonPressed('1') value='1'>
+<input type='button' class="keypadbutton" id="2" onclick=buttonPressed('2') value='2'>
+<input type='button' class="keypadbutton" id="3" onclick=buttonPressed('3') value='3'>
+<br>
+<input type='button' class="keypadbutton" id="4" onclick=buttonPressed('4') value='4'>
+<input type='button' class="keypadbutton" id="5" onclick=buttonPressed('5') value='5'>
+<input type='button' class="keypadbutton" id="6" onclick=buttonPressed('6') value='6'>
+<br>
+<input type='button' class="keypadbutton" id="7" onclick=buttonPressed('7') value='7'>
+<input type='button' class="keypadbutton" id="8" onclick=buttonPressed('8') value='8'>
+<input type='button' class="keypadbutton" id="9" onclick=buttonPressed('9') value='9'>
+<br>
+<input type='button' class="keypadbutton" id="CLR" onclick=buttonPressed('CLR') value='CLR'>
+<input type='button' class="keypadbutton" id="0" onclick=buttonPressed('0') value='0'>
+<input type='button' class="keypadbutton" id="OK" onclick=buttonPressed('OK') value='OK'>
+</div>
 <h2>Configuration <input type=button onclick="location.href='index.html'" value='Back'></h2>
 <button onClick='setSuperUserCode()'>Set superuser code</button>
 <button onClick='setAdminCode()'>Set admin code</button>

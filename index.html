@@ -111,7 +111,7 @@ function buttonPressed(key) {
 	var e = document.getElementById('keypadInput');
 	if(key == 'OK') {
 		document.getElementById('overlay').className='hidden';
-		document.getElementById('keypad').className='hidden';
+		document.getElementById('keypad').className='hidden keypad';
                 var req = new Object();
 		req.type = "keypadAction";
 		req.action = sessionStorage.ihcKeypadAction;
@@ -147,7 +147,7 @@ function keypadResponse() {
 
 function hideKeypad() {
 	document.getElementById('overlay').className='hidden';
-	document.getElementById('keypad').className='hidden';
+	document.getElementById('keypad').className='hidden keypad';
 	sessionStorage.ihcKeypadAction = "";
 	document.getElementById('keypadInput').value = "";
 }
@@ -155,7 +155,7 @@ function hideKeypad() {
 function login() {
 	sessionStorage.ihcKeypadAction = "login"; 
 	document.getElementById('overlay').className='visible';
-	document.getElementById('keypad').className='visible modal';
+	document.getElementById('keypad').className='visible keypad modal';
 }
 
 function setAlarm() {
@@ -341,9 +341,9 @@ function handleResponse() {
 </head>
 <body onresize="alignFloatLayers()" onscroll="alignFloatLayers()">
 <div id='overlay' class='hidden'></div>
-<div id='keypad' class='hidden'>
+<div id='keypad' class='hidden keypad'>
 <input type='image' id='closeButton' src='close.png' onclick='hideKeypad()'/>
-<input type='password' id='keypadInput' name='password'>
+<input type='password' class='password keypadInput' id='keypadInput' name='password'>
 <br><br>
 <input type='button' class="keypadbutton" id="1" onclick=buttonPressed('1') value='1'>
 <input type='button' class="keypadbutton" id="2" onclick=buttonPressed('2') value='2'>
