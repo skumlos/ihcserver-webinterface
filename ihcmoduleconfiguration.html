@@ -71,6 +71,11 @@ function fillModuleConfiguration() {
 				var ioAlarm = response.ioAlarmStates[j].ioAlarm;
 				document.getElementById('alarm'+ioNumber).checked = ioAlarm;
 			}
+			for(var j=0; j < response.ioEntryStates.length; j++) {
+				var ioNumber = response.ioEntryStates[j].ioNumber;
+				var ioEntry = response.ioEntryStates[j].ioEntry;
+				document.getElementById('entry'+ioNumber).checked = ioEntry;
+			}
 		}
 	}
 }
@@ -84,6 +89,7 @@ function setModuleConfiguration() {
 	req.ioDescriptions = new Array();
 	req.ioProtectedStates = new Array();
 	req.ioAlarmStates = new Array();
+	req.ioEntryStates = new Array();
 	req.state = document.getElementById("moduleState").checked;
 	var toCheck = 8;
 	if(moduleType == "input") {
@@ -110,6 +116,13 @@ function setModuleConfiguration() {
 		ioAlarm.ioAlarm = alarm;
 		req.ioAlarmStates.push(ioAlarm);
 	}
+	for(var i = 1; i <= toCheck; i++) {
+		var ioEntry = new Object();
+		var entry = document.getElementById('entry'+i).checked;
+		ioEntry.ioNumber = i;
+		ioEntry.ioEntry = entry;
+		req.ioEntryStates.push(ioEntry);
+	}
 	var jsonRequest = JSON.stringify(req);
 
 	http = createRequestObject();
@@ -134,14 +147,16 @@ if(moduleType == "output") {
 	for(var cnt = 1; cnt <= 8; cnt++) {
 		document.write("Output "+moduleNumber+"."+cnt+" <input type='text' id='"+cnt+"'>");
 		document.write("<input type='checkbox' id='protected"+cnt+"' value='state'> Protected ");
-		document.write("<input type='checkbox' id='alarm"+cnt+"' value='state'> Alarm<br>");
+		document.write("<input type='checkbox' id='alarm"+cnt+"' value='state'> Alarm");
+		document.write("<input type='checkbox' id='entry"+cnt+"' value='state'> Entry<br>");
 	}
 } else if(moduleType == "input") {
 	document.write("<h3>Input descriptions</h3>");
 	for(var cnt = 1; cnt <= 16; cnt++) {
 		document.write("Input "+moduleNumber+"."+cnt+" <input type='text' id='"+cnt+"'>");
 		document.write("<input type='checkbox' id='protected"+cnt+"' value='state'> Protected ");
-		document.write("<input type='checkbox' id='alarm"+cnt+"' value='state'> Alarm<br>");
+		document.write("<input type='checkbox' id='alarm"+cnt+"' value='state'> Alarm");
+		document.write("<input type='checkbox' id='entry"+cnt+"' value='state'> Entry<br>");
 	}
 } else {
 	alert("Ballade");

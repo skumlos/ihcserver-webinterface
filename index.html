@@ -275,6 +275,22 @@ function toggleOutput(moduleNumber,outputNumber) {
         ihcrequests.send(jsonRequest);
 }
 
+function changeInput(moduleNumber,inputNumber,shouldActivate) {
+	var request = new Object();
+	request.type = shouldActivate ? "activateInput" : "deactivateInput";
+	request.moduleNumber = moduleNumber;
+	request.ioNumber = inputNumber;
+	request.id = sessionid;
+	var jsonRequest = JSON.stringify(request);
+	ihcrequests = createRequestObject();
+	ihcrequests.open('POST', 'ihcrequest',true);
+        ihcrequests.setRequestHeader("Content-type", "application/json");
+        ihcrequests.setRequestHeader("Content-length", jsonRequest.length);
+       	ihcrequests.setRequestHeader("Connection", "close");
+//        ihcrequests.onreadystatechange = handleResponse;
+        ihcrequests.send(jsonRequest);
+}
+
 function getAll() {
 	var request = new Object();
 	request.type = "getAll";
@@ -397,7 +413,7 @@ for (var i=0;i<inputModules;i++)
 			document.write("<br><br>");
 		}
 		var inputName = "input."+(i+1)+"."+(j+1);
-		document.write("<input class=\"iobutton inputbutton\" type=\"button\" id=\""+inputName+"\" onclick=toggleInput("+(i+1)+","+(j+1)+")>");
+		document.write("<input class='iobutton inputbutton' type='button' id='"+inputName+"' onmousedown='changeInput("+(i+1)+","+(j+1)+",true)' onmouseup='changeInput("+(i+1)+","+(j+1)+",false)'>");
 	}
 	document.write("</div>");
 }
