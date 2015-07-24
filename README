@@ -6,6 +6,8 @@ Since 0.2:
 
 Now meant to be provided by IHCServer directly
 
+Gets events by websocket (small indicator in right lower corner shows status, green = connected, yellow = ping, red = disconnected)
+
 Removed dynamic controlpanel float stuff, for more static look
 
 Added color indications of alarm, protected and entry I/Os
