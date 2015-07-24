@@ -1,10 +1,13 @@
-IHCServer Web Interface v0.2
+IHCServer Web Interface v0.3
 
 This is the web interface to IHCServer.
 
-Tested on apache with PHP v5.3 running on Ubuntu 12.10  in Firefox 19.
+Since 0.2:
 
-Sources:
-http://www.fiendish.demon.co.uk/html/javascript/layerfloat.html
+Now meant to be provided by IHCServer directly
 
-2013, Martin Hejnfelt (martin@hejnfelt.com)
+Removed dynamic controlpanel float stuff, for more static look
+
+Added color indications of alarm, protected and entry I/Os
+
+2015, Martin Hejnfelt (martin@hejnfelt.com)
