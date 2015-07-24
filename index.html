@@ -1,10 +1,15 @@
+<!DOCTYPE html>
 <html>
 <head>
-<meta name="keywords" content="HTML, CSS, JavaScript">
+<meta name="description" content="IHCServer Webinterface">
+<meta name="keywords" content="html,css,javascript">
+<meta name="author" content="Martin Hejnfelt, martin@hejnfelt.com">
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache" />
+<META HTTP-EQUIV="Expires" CONTENT="-1">
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
 
 <link href="ihcserver.css" rel="stylesheet" type="text/css">
-<script language="javascript" src="FloatLayer.js"></script>
 <script src="sha1.js"></script>
 <script>
 var title = "IHCServer Webinterface";
@@ -320,8 +325,16 @@ function handleResponse() {
 						var outputDescription = response.modules.outputModules[i].outputStates[j].description;
 						if(outputDescription == "") { outputDescription = "Output "+moduleNumber+"."+outputNumber; };
 						var outputName = "output."+moduleNumber+"."+outputNumber;
-						document.getElementById(outputName).value = outputDescription;
-						document.getElementById(outputName).style.background = (outputState ? "lightgreen":"lightgrey");
+						var elem = document.getElementById(outputName);
+						elem.value = outputDescription;
+						elem.style.background = (outputState ? "lightgreen":"lightgrey");
+						if(response.modules.outputModules[i].outputStates[j].alarm) {
+							elem.style.border = "solid red 1px";	
+						} else if(response.modules.outputModules[i].outputStates[j].protected) {
+							elem.style.border = "solid yellow 1px";	
+						} else if(response.modules.outputModules[i].outputStates[j].entry) {
+							elem.style.border = "solid blue 1px";	
+						}
 					}
 				}
 			}
@@ -331,13 +344,22 @@ function handleResponse() {
 					document.getElementById(divname).style.display = "block";
 					for(var j=0; j < response.modules.inputModules[i].inputStates.length; j++) {
 						var moduleNumber = response.modules.inputModules[i].moduleNumber;
-						var inputNumber = response.modules.inputModules[i].inputStates[j].inputNumber;
-						var inputState = response.modules.inputModules[i].inputStates[j].inputState;
-						var inputDescription = response.modules.inputModules[i].inputStates[j].description;
+						var inputState = response.modules.inputModules[i].inputStates[j];
+						var inputNumber = inputState.inputNumber;
+						var state = inputState.inputState;
+						var inputDescription = inputState.description;
 						if(inputDescription == "") { inputDescription = "Input "+moduleNumber+"."+inputNumber; };
 						var inputName = "input."+moduleNumber+"."+inputNumber;
-						document.getElementById(inputName).value = inputDescription;
-						document.getElementById(inputName).style.background = (inputState ? "lightgreen":"lightgrey");
+						var elem = document.getElementById(inputName);
+						elem.value = inputDescription;
+						elem.style.background = (state ? "lightgreen":"lightgrey");
+						if(inputState.alarm) {
+							elem.style.border = "solid red 1px";	
+						} else if(inputState.protected) {
+							elem.style.border = "solid yellow 1px";	
+						} else if(inputState.entry) {
+							elem.style.border = "solid blue 1px";	
+						}
 					}
 				}
 			}
@@ -353,9 +375,16 @@ function handleResponse() {
 	}
 }
 
+function scrollControlPanel() {
+	var doc = document.documentElement;
+	var top = (window.pageYOffset || doc.scrollTop)  - (doc.clientTop || 0);
+	var control = document.getElementById('controlpanel');
+	control.style.top = top+5+"px";
+}
 </script>
 </head>
-<body onresize="alignFloatLayers()" onscroll="alignFloatLayers()">
+
+<body onscroll="scrollControlPanel()">
 <div id='overlay' class='hidden'></div>
 <div id='keypad' class='hidden keypad'>
 <input type='image' id='closeButton' src='close.png' onclick='hideKeypad()'/>
@@ -382,7 +411,7 @@ function handleResponse() {
 <button class="controlpanelButton" onClick="location.href='configuration.html'"><img src="configuration.png"><br>Configuration</button>
 <button class="controlpanelButton" onClick="setAlarm()" id="alarm" style="float: left"<img src="loading.gif"><br>Alarm</button>
 <script>
-document.write("<div style=\"text-align: center; padding-left: 180px;\"><p>"+title+"</p></div>");
+document.write("<div id='controlPanelTitle'><p>"+title+"</p></div>");
 </script>
 </div>
 <div id="ioOverview">
@@ -421,18 +450,6 @@ for (var i=0;i<inputModules;i++)
 </script>
 </div>
 <script>
-addFloatLayer('controlpanel',5,5,2);
-function detach(layername){
-	lay  = document.getElementById(layername);
-	left = getXCoord(lay);
-	top  = getYCoord(lay);
-	lay.style.position = 'absolute';
-	lay.style.top      = top;
-	lay.style.left     = left;
-	getFloatLayer(layername).initialize();
-	alignFloatLayers();
-}
-detach('controlpanel');
 getAll();
 getUserlevel();
 </script>
@@ -442,7 +459,7 @@ getUserlevel();
 <script>
 var author = "Martin Hejnfelt";
 var email = "martin@hejnfelt.com";
-var year = "2013";
+var year = "2015";
 document.write(title+" v"+version);
 document.write("<br>");
 document.write("(C) "+year+" by "+author+" ("+email+")");

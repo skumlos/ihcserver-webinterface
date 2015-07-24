@@ -4,7 +4,7 @@
 
 
 button::-moz-focus-inner {
-  border: 0;
+	border: 0;
 }
 
 body {
@@ -13,6 +13,7 @@ body {
 }
 
 #ioOverview {
+	clear: both;
 	background-color: rgba(79,79,79,1.0);
 	margin-top: 104px;
 	margin-left: auto;
@@ -28,6 +29,15 @@ body {
 	padding: 5px;
 	font-family: arial;
 	font-size: 20px;
+	position: absolute;
+	top: 5px;
+	left: 5px;
+	height: 75px;
+}
+
+#controlPanelTitle {
+	text-align: center;
+	padding-left: 210px;
 }
 
 #userlevel {
@@ -48,14 +58,15 @@ body {
 }
 
 .keypadInput {
-	text-align:center;
-	margin-left: 36;
-	font-size: 48; 
+	position: relative;
+	text-align: center;
+	font-size: 48px;
 	font-weight: bold;
 	width: 200px;
 	height: 60px;
 	border: solid black 1px;
 	border-radius: 4px;
+	margin-left: 35px;
 }
 
 .keypad {
