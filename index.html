@@ -348,7 +348,7 @@ function handleResponse() {
 						var inputNumber = inputState.inputNumber;
 						var state = inputState.inputState;
 						var inputDescription = inputState.description;
-						if(inputDescription == "") { inputDescription = "Input "+moduleNumber+"."+inputNumber; };
+						if(inputDescription == "") { inputDescription = "Input "+moduleNumber+"."+(inputNumber>8?inputNumber+2:inputNumber); };
 						var inputName = "input."+moduleNumber+"."+inputNumber;
 						var elem = document.getElementById(inputName);
 						elem.value = inputDescription;

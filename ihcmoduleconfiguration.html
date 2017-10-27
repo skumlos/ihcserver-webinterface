@@ -162,7 +162,7 @@ if(moduleType == "output") {
 } else if(moduleType == "input") {
 	document.write("<h3>Input descriptions</h3>");
 	for(var cnt = 1; cnt <= 16; cnt++) {
-		document.write("Input "+moduleNumber+"."+cnt+" <input type='text' id='"+cnt+"'>");
+		document.write("Input "+moduleNumber+"."+(cnt>8?cnt+2:cnt)+" <input type='text' id='"+cnt+"'>");
 		document.write("<input type='checkbox' id='protected"+cnt+"' value='state'> Protected ");
 		document.write("<input type='checkbox' id='alarm"+cnt+"' value='state'> Alarm");
 		document.write("<input type='checkbox' id='entry"+cnt+"' value='state'> Entry<br>");
