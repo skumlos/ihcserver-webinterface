@@ -374,17 +374,10 @@ function handleResponse() {
 		alert("Problem retrieving data\n");
 	}
 }
-
-function scrollControlPanel() {
-	var doc = document.documentElement;
-	var top = (window.pageYOffset || doc.scrollTop)  - (doc.clientTop || 0);
-	var control = document.getElementById('controlpanel');
-	control.style.top = top+5+"px";
-}
 </script>
 </head>
 
-<body onscroll="scrollControlPanel()">
+<body>
 <div id='overlay' class='hidden'></div>
 <div id='keypad' class='hidden keypad'>
 <input type='image' id='closeButton' src='close.png' onclick='hideKeypad()'/>
@@ -406,6 +399,7 @@ function scrollControlPanel() {
 <input type='button' class="keypadbutton" id="0" onclick=buttonPressed('0') value='0'>
 <input type='button' class="keypadbutton" id="OK" onclick=buttonPressed('OK') value='OK'>
 </div>
+<div id="controlpanelcontainer">
 <div id="controlpanel">
 <button class="controlpanelButton" onClick="login()"><img src="login.png"><br>Login</button>
 <button class="controlpanelButton" onClick="location.href='configuration.html'"><img src="configuration.png"><br>Configuration</button>
@@ -413,6 +407,7 @@ function scrollControlPanel() {
 <script>
 document.write("<div id='controlPanelTitle'><p>"+title+"</p></div>");
 </script>
+</div>
 </div>
 <div id="ioOverview">
 <script>
@@ -442,7 +437,7 @@ for (var i=0;i<inputModules;i++)
 			document.write("<br><br>");
 		}
 		var inputName = "input."+(i+1)+"."+(j+1);
-		document.write("<input class='iobutton inputbutton' type='button' id='"+inputName+"' onmousedown='changeInput("+(i+1)+","+(j+1)+",true)' onmouseup='changeInput("+(i+1)+","+(j+1)+",false)'>");
+		document.write("<input class='iobutton inputbutton' type='button' id='"+inputName+"' onmousedown='changeInput("+(i+1)+","+(j+1)+",true)' onmouseup='changeInput("+(i+1)+","+(j+1)+",false)'/>");
 	}
 	document.write("</div>");
 }
